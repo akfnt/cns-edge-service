@@ -18,6 +18,6 @@ spring:
           predicates:
             - Path=/books/**            # 일치하는 경로를 술어로 사용한다
         - id: order-route
-          uri: ${ORDER_SERVICE_URL:http://localhost:9001}/orders
+          uri: ${ORDER_SERVICE_URL:http://localhost:9002}/orders
           predicates:
             - Path=/orders/**
