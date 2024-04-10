@@ -24,10 +24,21 @@ spring:
           uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books   # URI 값은 환경변수로 오거나 해당 환경변수가 없는 경우 오른쪽의 기본값을 사용한다
           predicates:
             - Path=/books/**            # 일치하는 경로를 술어로 사용한다
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: catalogCircuitBreaker
+                fallbackUrl: forward:/catalog-fallback    # 써킷이 오픈되었을때 fallback url 호출
+                                                          # Retry 필터가 해당 route 에도 적용되므로 모든 재시도가 실패하는 경우에도 fallback url 호출됨
         - id: order-route
           uri: ${ORDER_SERVICE_URL:http://localhost:9002}/orders
           predicates:
             - Path=/orders/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orderCircuitBreaker
+                # 서킷 브레이커에 대해 정의된 폴백이 없음
       default-filters:
         - name: Retry
           args:
