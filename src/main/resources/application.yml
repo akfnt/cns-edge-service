@@ -1,0 +1,12 @@
+server:
+  port: 9000
+  shutdown: graceful                    # 우아한 종료를 위한 활성화
+  netty:
+    connection-timeout: 2s              # 서버와 TCP 연결을 수립하기 위해 기다리는 시간
+    idle-timeout: 15s                   # 데이터가 전송되지 않는 경우 TCP 연결을 닫기 전에 기다리는 시간
+
+spring:
+  application:
+    name: cns-edge-service
+  lifecycle:
+    timeout-per-shutdown-phase: 15s     # 15초간의 우아한 종료기간을 둔다
