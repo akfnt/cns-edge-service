@@ -28,7 +28,7 @@ spring:
             - name: CircuitBreaker
               args:
                 name: catalogCircuitBreaker
-                fallbackUrl: forward:/catalog-fallback    # 써킷이 오픈되었을때 fallback url 호출
+                fallbackUri: forward:/catalog-fallback    # 써킷이 오픈되었을때 fallback url 호출
                                                           # Retry 필터가 해당 route 에도 적용되므로 모든 재시도가 실패하는 경우에도 fallback url 호출됨
         - id: order-route
           uri: ${ORDER_SERVICE_URL:http://localhost:9002}/orders
@@ -66,3 +66,7 @@ resilience4j:
       default:    # 모든 시간 제한에 대한 기본 설정
                   # 네티 HTTP 클라이언트 응답 타임아웃보다 높은 우선순위를 갖는다
         timeoutDuration: 5s
+
+logging:
+  level:
+    io.github.resilience4j: DEBUG
