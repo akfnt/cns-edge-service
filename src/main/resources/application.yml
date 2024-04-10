@@ -53,3 +53,16 @@ spring:
               basedOnPreviousValue: false   # true 로 설정하면 공식은 prevBackoff * factor 가 된다.
                                             # 이전 재시도의 성공 여부에 따라 다음 재시도 간격이 결정됨
                                             # 이전 재시도가 성공 -> 초기 재시도 간격으로 재설정됨. 이전 재시도가 실패 -> 해당 이전 재시도 간격으로 재시도 간격을 계산
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:    # 모든 서킷 브레이커에 대한 기본 설정
+        slidingWindowSize: 20           # 써킷이 닫힌 상태일때 호출의 결과를 기록하는데 사용하는 슬라이딩 윈도의 크기
+        permittedNumberOfCallsInHalfOpenState: 5    # 써킷이 반개방 상태일때 허용되는 호출의 수
+        failureRateThreshold: 50        # 실패율이 임계값 이상이면 써킷은 개방상태로 바뀐다
+        waitDurationInOpenState: 15000  # 개방 상태에서 반개방 상태로 가기까지 기다릴 시간 (밀리초)
+  timelimiter:
+    configs:
+      default:    # 모든 시간 제한에 대한 기본 설정
+                  # 네티 HTTP 클라이언트 응답 타임아웃보다 높은 우선순위를 갖는다
+        timeoutDuration: 5s
