@@ -10,3 +10,14 @@ spring:
     name: cns-edge-service
   lifecycle:
     timeout-per-shutdown-phase: 15s     # 15초간의 우아한 종료기간을 둔다
+  cloud:
+    gateway:
+      routes:
+        - id: catalog-route
+          uri: ${CATALOG_SERVICE_URL:http://localhost:9001}/books   # URI 값은 환경변수로 오거나 해당 환경변수가 없는 경우 오른쪽의 기본값을 사용한다
+          predicates:
+            - Path=/books/**            # 일치하는 경로를 술어로 사용한다
+        - id: order-route
+          uri: ${ORDER_SERVICE_URL:http://localhost:9001}/orders
+          predicates:
+            - Path=/orders/**
