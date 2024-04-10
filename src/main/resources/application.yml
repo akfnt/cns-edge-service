@@ -28,3 +28,17 @@ spring:
           uri: ${ORDER_SERVICE_URL:http://localhost:9002}/orders
           predicates:
             - Path=/orders/**
+      default-filters:
+        - name: Retry
+          args:
+            retries: 3
+            methods: GET                # GET 요청만 재시도
+            series: SERVER_ERROR        # 5xx 오류에 대해서만 재시도
+            exceptions: java.io.IOException, java.util.concurrent.TimeoutException  # 지정한 예외가 발생할 때만 재시도
+            backoff:                    # 재시도는 firstBackoff * (factor^n) 공식을 사용해 계산
+              firstBackoff: 50ms
+              maxBackoff: 500ms
+              factor: 2
+              basedOnPreviousValue: false   # true 로 설정하면 공식은 prevBackoff * factor 가 된다.
+                                            # 이전 재시도의 성공 여부에 따라 다음 재시도 간격이 결정됨
+                                            # 이전 재시도가 성공 -> 초기 재시도 간격으로 재설정됨. 이전 재시도가 실패 -> 해당 이전 재시도 간격으로 재시도 간격을 계산
