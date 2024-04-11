@@ -1,0 +1,39 @@
+apiVersion: apps/v1                       # 배포 객체에 대한 API 버전
+kind: Deployment                          # 생성할 객체의 유형
+metadata:
+  name: cns-edge-service               # 배포의 이름
+  labels:                                 # 배포에 추가할 레이블의 집합
+    app: cns-edge-service              # 이 배포는 'app=cns-edge-service' 라는 레이블을 갖는다
+spec:
+  replicas: 1                             # 몇 개의 파드 복제본을 배포할 것인지 설정한다
+  selector:                               # 확장할 파드를 선택하기 위해 사용할 레이블을 정의한다
+    matchLabels:
+      app: cns-edge-service
+  template:                               # 파드 생성을 위한 템플릿
+    metadata:
+      labels:                             # 파드 객체에 추가되는 레이블. 레이블은 selector 로 사용하는 것과 일치해야 한다
+        app: cns-edge-service
+    spec:
+      containers:                         # 파드 내 컨테이너의 목록
+      - name: cns-edge-service         # 파드 이름
+        image: cns-edge-service        # 컨테이너를 실행하기 위해 사용할 이미지. 태그가 정의되지 않으면 latest가 암묵적으로 사용된다
+        imagePullPolicy: IfNotPresent     # 이미지가 로컬에 없는 경우에만 컨테이너 저장소에서 이미지를 다운로드 받을 것을 쿠버네티스에 지시
+        lifecycle:
+          preStop:                        # 쿠버네티스가 클러스터 전체에 요청 전달 명령을 전파할 수 있는 충분한 시간을 확보하기 위해
+            exec:                         # 쿠버네티스가 파드에 SIGTERM 신호를 보내기 전에 5초를 기다리게 한다
+              command: [ "sh", "-c", "sleep 5" ]
+        ports:
+          - containerPort: 9000           # 컨테이너에 의해 노출되는 포트
+        env:                              # 파드로 전달되는 환경변수의 목록
+          - name: BPL_JVM_THREAD_COUNT
+            value: "50"
+          - name: SPRING_CLOUD_CONFIG_URI
+            value: "http://cns-config-service"
+          - name: SPRING_CLOUD_CONFIG_FAIL-FAST
+            value: "true"
+          - name: SPRING_REDIS_HOST
+            value: "polar-redis"
+          - name: CATALOG_SERVICE_URL
+            value: "http://cns-catalog-service"
+          - name: ORDER_SERVICE_URL
+            value: "http://cns-order-service"
