@@ -51,6 +51,9 @@ spring:
               replenishRate: 10         # 초당 버킷에 떨어지는 토큰의 수
               burstCapacity: 20         # 최대 20개 요청까지 허용 (스파이크 요청에 대한 처리를 위해 설정. 연달아 발생하는 스파이크에 대해서는 버스트가 허용되지 않는다)
               requestedTokens: 1        # 하나의 요청 처리에 몇 개의 토큰이 사용되는지 지정
+        - name: RemoveMultipleResponseHeaders   # RequestRateLimiter 정보를 응답 헤더에서 제거하는 필터
+          args:
+            headersToRemove: X-Ratelimit-Burst-Capacity,X-Ratelimit-Remaining,X-Ratelimit-Replenish-Rate,X-Ratelimit-Requested-Tokens
         - name: Retry
           args:
             retries: 3
@@ -78,6 +81,6 @@ resilience4j:
                   # 네티 HTTP 클라이언트 응답 타임아웃보다 높은 우선순위를 갖는다
         timeoutDuration: 5s
 
-logging:
-  level:
-    io.github.resilience4j: DEBUG
+#logging:
+#  level:
+#    io.github.resilience4j: DEBUG
