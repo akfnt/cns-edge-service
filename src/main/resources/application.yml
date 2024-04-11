@@ -15,6 +15,11 @@ spring:
     host: localhost                     # 레디스 호스트 기본값
     port: 6379                          # 레디스 포트 기본값
     timeout: 1s                         # 응답을 받기까지 기다리는 시간의 한도
+  session:
+    store-type: redis
+    timeout: 10m
+    redis:
+      namespace: polar:edge
   cloud:
     gateway:
       httpclient:
@@ -45,6 +50,7 @@ spring:
                 name: orderCircuitBreaker
                 # 서킷 브레이커에 대해 정의된 폴백이 없음
       default-filters:
+        - SaveSession                   # 요청을 서비스로 전달하기 전에 세션 데이터를 저장한다
         - name: RequestRateLimiter      # 게이트웨이 필터로 요청 사용률 제한 설정. 레디스에 문제가 생겨 사용할 수 없는 경우 사용률 제한은 일시적으로 비활성화됨.
           args:
             redis-rate-limiter:
@@ -67,6 +73,7 @@ spring:
               basedOnPreviousValue: false   # true 로 설정하면 공식은 prevBackoff * factor 가 된다.
                                             # 이전 재시도의 성공 여부에 따라 다음 재시도 간격이 결정됨
                                             # 이전 재시도가 성공 -> 초기 재시도 간격으로 재설정됨. 이전 재시도가 실패 -> 해당 이전 재시도 간격으로 재시도 간격을 계산
+
 resilience4j:
   circuitbreaker:
     configs:
