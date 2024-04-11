@@ -1,0 +1,95 @@
+# 배포 파이프라인 자동화를 위한 워크플로 정의
+name: Commit Stage                      # 워크플로 이름
+on: push                                # 새 코드를 저장소로 푸시하면 워크플로를 시작한다
+
+env:
+  REGISTRY: ghcr.io                     # 깃허브 컨테이너 저장소를 사용한다
+  IMAGE_NAME: akfnt/cns-edge-service    # 이미지의 이름. 자신의 깃허브 유저명을 소문자로 추가한다
+  VERSION: latest                       # 지금은 새 이미지를 latest로 태깅한다
+
+jobs:
+  build:                                # 작업의 고유 식별자
+    name: Build And Test                # 작업의 인간 친화적 명칭
+    runs-on: ubuntu-latest              # 작업이 실행될 머신의 유형
+    permissions:                        # 작업에 부여된 권한
+      contents: read                    # 현재 깃 저장소를 체크 아웃할 수 있는 권한
+      security-events: write            # 깃허브에 보안 이벤트를 제출할 수 있는 권한
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4       # 현재 깃 저장소(cns-edge-service) 를 체크아웃 한다
+      - name: Set Up JDK
+        uses: actions/setup-java@v4     # 자바 런타임을 설치하고 설정한다
+        with:                           # 사용할 버전, 배포, 캐시 유형을 정의한다
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Code vulnerability scanning
+        uses: anchore/scan-action@v3    # 그라이프를 사용해 취약성을 스캔한다
+        id: scan                        # 현재 단계의 식별자르르 할당하고 이후의 단계에서 참고할 수 있다
+        with:
+          path: "${{ github.workspace }}" # 체크아웃 저장소 패스
+          fail-build: false             # 보안 취약성 발견시 빌드 실패 여부 (실제 시나리오에서는 trye 값으로 설정하는게 바람직)
+          severity-cutoff: high         # 오류로 간주할 최소 수준의 보안 유형(낮음, 중간, 높음, 치명적)
+      - name: Upload vulnerability report
+        uses: github/codeql-action/upload-sarif@v3  # 깃허브로 보안 취약성 리포트(SARIF 형식) 전송
+        if: success() || failure()          # 이전 단계가 실패하더라도 리포트 전송
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }} # 이전 단계 결과의 리포트를 가져온다
+      - name: Build, unit tests and integration tests
+        # 첫째줄: 윈도우 호환성을 해결하면서 그래들 래퍼 스크립트를 실행 가능하게 만든다
+        # 둘째줄: 코드베이스를 컴파일하고 단뒤 및 통합 테스트를 실행하는 그래들 빌드 작업을 수행한다
+        run: |
+          chmod +x gradlew
+          ./gradlew build
+      - name: Validate Kubernetes manifests
+        uses: stefanprodan/kube-tools@v1        # 쿠버네티스를 위한 유용한 도구를 설치할 수 있는 액션
+        with:
+          kubectl: 1.28.3                       # 쿠버네티스 CLI 를 설치한다
+          kubeval: 0.16.1                       # 큐비발을 설치한다
+          # k8s 폴더에 있는 쿠버네티스 매니페스트의 유효성 검사를 위해 큐비발을 사용한다
+          # Different schema required because of https://github.com/instrumenta/kubeval/issues/301
+          command: |
+            kubeval --strict --schema-location https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master -d k8s
+  package:  # 잡의 고유 식별자
+    name: Package and Publish
+    if: ${{ github.ref == 'refs/heads/main' }}    # 잡을 main 브렌치에 대해서만 실행한다
+    needs: [ build ]                              # 'build' 잡이 설공적으로 수행된 경우에만 이 잡을 실행한다
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read                              # 현재 깃 저장소를 체크 아웃하기 위한 권한
+      packages: write                             # 깃허브 컨테이너 저장소로 이미지를 업로드하기 위한 권한
+      security-events: write                      # 깃허브로 보안 이벤트를 제출하기 위한 권한
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4                 # 현재 깃 저장소(cns-edge-service)를 체크아웃 한다
+      - name: Set Up JDK
+        uses: actions/setup-java@v4               # 자바 런타임을 설치하고 설정한다
+        with:                                     # 사용할 버전, 배포, 캐시 유형을 정의한다
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - name: Build container image
+        # 컨테이너 이미지를 빌드하고 릴리스 후보흫 위한 이름을 정의하기 위해 스프링 부트의 빌드팩 통합을 사용한다
+        run: |
+          chmod +x gradlew
+          ./gradlew bootBuildImage --imageName ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+      - name: OCI image vulnerability scanning
+        uses: anchore/scan-action@v3              # 취약성 검사를 위해 그라이프를 사용해 릴리스 후보 이미지를 스캔한다
+        id: scan                                  # 현재 단계의 식별자르르 할당하고 이후의 단계에서 참고할 수 있다
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}   # 스캔할 이미지는 릴리스 후보다
+          fail-build: false                       # 이미지에서 취약성이 발견되더라도 빌드를 실패로 만들지 않는다 (실제 시나리오에서는 trye 값으로 설정하는게 바람직)
+          severity-cutoff: high                   # 오류로 간주할 최소 수준의 보안 유형(낮음, 중간, 높음, 치명적)
+      - name: Upload vulnerability report
+        uses: github/codeql-action/upload-sarif@v3  # 깃허브로 보안 취약성 리포트(SARIF 형식) 전송
+        if: success() || failure()                # 이전 단계가 실패하더라도 리포트 전송
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }} # 이전 단계 결과의 리포트를 가져온다
+      - name: Log into container registry
+        uses: docker/login-action@v3              # 깃허브 컨테이너 저장소와 인증한다
+        with:
+          registry: ${{ env.REGISTRY }}           # 저장소 정보는 환경변수로 정의된다
+          username: ${{ github.actor }}           # 깃허브 액션이 제공하는 현재 사용자의 깃허브 유저명
+          password: ${{ secrets.GITHUB_TOKEN }}   # 저장소와 인증하기 위해 필요한 토큰. 깃허브 액션이 제공한다
+      - name: Publish container image             # 릴리스 후보를 저장소로 푸시한다
+        run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
