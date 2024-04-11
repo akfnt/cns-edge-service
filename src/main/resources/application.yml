@@ -45,6 +45,12 @@ spring:
                 name: orderCircuitBreaker
                 # 서킷 브레이커에 대해 정의된 폴백이 없음
       default-filters:
+        - name: RequestRateLimiter      # 게이트웨이 필터로 요청 사용률 제한 설정. 레디스에 문제가 생겨 사용할 수 없는 경우 사용률 제한은 일시적으로 비활성화됨.
+          args:
+            redis-rate-limiter:
+              replenishRate: 10         # 초당 버킷에 떨어지는 토큰의 수
+              burstCapacity: 20         # 최대 20개 요청까지 허용 (스파이크 요청에 대한 처리를 위해 설정. 연달아 발생하는 스파이크에 대해서는 버스트가 허용되지 않는다)
+              requestedTokens: 1        # 하나의 요청 처리에 몇 개의 토큰이 사용되는지 지정
         - name: Retry
           args:
             retries: 3
