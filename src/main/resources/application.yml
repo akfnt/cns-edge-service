@@ -12,7 +12,7 @@ spring:
     timeout-per-shutdown-phase: 15s     # 15초간의 우아한 종료기간을 둔다
   config:
     import: "optional:configserver:"
-  redis:
+  data.redis:
     connect-timeout: 2s                 # 연결이 수립되기까지 기다리는 시간의 한도
     host: localhost                     # 레디스 호스트 기본값
     port: 6379                          # 레디스 포트 기본값
