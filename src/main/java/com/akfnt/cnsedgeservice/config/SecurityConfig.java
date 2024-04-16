@@ -13,8 +13,7 @@ public class SecurityConfig {
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http.authorizeExchange(exchange ->
                 exchange.anyExchange().authenticated())     // 모든 요청은 인증이 필요하다
-                .formLogin(Customizer.withDefaults())       // 사용자 인증을 로그인 양식을 통해 활성화한다.
-                                                            // 기본 설정에는 프레임워크에서 제공하는 로그인 페이지와 인증이 되지 않은 경우 해당 페이지로의 자동 라다이렉션이 포함되어 있다
+                .oauth2Login(Customizer.withDefaults())     // OAuth2 / OpenID 커넥트를 사용한 사용자 인증을 활성화한다
                 .build();
     }
 }
