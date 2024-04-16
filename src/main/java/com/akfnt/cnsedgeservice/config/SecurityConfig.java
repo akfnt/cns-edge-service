@@ -9,9 +9,20 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.HttpStatusServerEntryPoint;
 import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
+import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
+import org.springframework.security.web.server.csrf.CsrfToken;
+import org.springframework.security.web.server.csrf.ServerCsrfTokenRequestHandler;
+import org.springframework.security.web.server.csrf.XorServerCsrfTokenRequestAttributeHandler;
+import org.springframework.web.server.WebFilter;
+import reactor.core.publisher.Mono;
+
+import java.util.function.Supplier;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -35,7 +46,30 @@ public class SecurityConfig {
                 .logout(logout -> logout.logoutSuccessHandler(
                         oidcLogoutSuccessHandler(clientRegistrationRepository)  // 로그아웃이 성공적으로 완료되는 경우에 대한 사용자 지정 핸들러를 정의
                 ))
+                .csrf((csrf) -> {                                               // 앵귤러 프런트엔드와 CSRF 토큰을 교환하기 위해 쿠키 기반 방식을 사용
+                        // https://docs.spring.io/spring-security/reference/5.8/migration/reactive.html#_i_am_using_angularjs_or_another_javascript_framework
+                        CookieServerCsrfTokenRepository tokenRepository = CookieServerCsrfTokenRepository.withHttpOnlyFalse();
+                        XorServerCsrfTokenRequestAttributeHandler delegate = new XorServerCsrfTokenRequestAttributeHandler();
+                        // Use only the handle() method of XorServerCsrfTokenRequestAttributeHandler and the
+                        // default implementation of resolveCsrfTokenValue() from ServerCsrfTokenRequestHandler
+                        ServerCsrfTokenRequestHandler requestHandler = delegate::handle;
+
+                        csrf.csrfTokenRepository(tokenRepository).csrfTokenRequestHandler(requestHandler);
+                })
                 .build();
+    }
+
+    // CsrfToken 리액티브 스트림을 구독하고 이 토큰의 값을 올바르게 추출하기 위한 목적만을 갖는 필터
+    // CookieServerCsrfTokenRepository 는 CsrfToken 구독을 보장하지 않으므로 WebFilter 안에서 이에 대한 해결 방안을 명시적으로 제공해야 한다
+    // https://github.com/spring-projects/spring-security/issues/5766
+    @Bean
+    WebFilter csrfCookieWebFilter() {
+        return (exchange, chain) -> {
+            Mono<CsrfToken> csrfToken = exchange.getAttributeOrDefault(CsrfToken.class.getName(), Mono.empty());
+            return csrfToken.doOnSuccess(token -> {
+                /* Ensures the token is subscribed to. */
+            }).then(chain.filter(exchange));
+        };
     }
 
     private ServerLogoutSuccessHandler oidcLogoutSuccessHandler(ReactiveClientRegistrationRepository clientRegistrationRepository) {
