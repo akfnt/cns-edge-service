@@ -18,11 +18,11 @@ public class UserController {
             return Mono.empty();
         }
 
-        var user = new User(                        // OidcUser에 있는 관련 클레임에서 사용자 객체 생성
+        var user = new User(                                // OidcUser에 있는 관련 클레임에서 사용자 객체 생성
                 oidcUser.getPreferredUsername(),
                 oidcUser.getGivenName(),
                 oidcUser.getFamilyName(),
-                List.of("employee", "customer")     // 임시적으로 하드코딩 값 지정
+                oidcUser.getClaimAsStringList("roles")      // roles 클레임을 추출해 문자열 리스트로 가져온다
         );
 
         return Mono.just(user);
