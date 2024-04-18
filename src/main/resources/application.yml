@@ -33,9 +33,6 @@ spring:
         provider:
           keycloak:                     # 위의 "registrationId" 와 같은 이름
             issuer-uri: http://localhost:8080/realms/PolarBookshop    # 특정 영역에 대한 OAuth2와 OIDC 관련 모든 엔드포인트의 정보를 제공하는 키클록 URL
-
-
-
   cloud:
     config:
       uri: http://localhost:8888
@@ -82,6 +79,7 @@ spring:
             - Path=/,/*.css,/*.js,/favicon.ico    # 루트 엔드포인트와 SPA 의 정적 리소스 경로
       default-filters:
         - SaveSession                   # 요청을 서비스로 전달하기 전에 세션 데이터를 저장한다
+        - TokenRelay                    # 다른 서비스를 호출할때 액세스 토큰 전달을 활성화한다
         - name: RequestRateLimiter      # 게이트웨이 필터로 요청 사용률 제한 설정. 레디스에 문제가 생겨 사용할 수 없는 경우 사용률 제한은 일시적으로 비활성화됨.
           args:
             redis-rate-limiter:
