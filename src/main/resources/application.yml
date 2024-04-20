@@ -118,6 +118,8 @@ resilience4j:
                   # 네티 HTTP 클라이언트 응답 타임아웃보다 높은 우선순위를 갖는다
         timeoutDuration: 5s
 
-#logging:
-#  level:
-#    io.github.resilience4j: DEBUG
+logging:
+  group:
+    circuitbreaker: io.github.resilience4j, org.springframework.cloud.circuitbreaker
+  level:
+    circuitbreaker: info
