@@ -123,3 +123,13 @@ logging:
     circuitbreaker: io.github.resilience4j, org.springframework.cloud.circuitbreaker
   level:
     circuitbreaker: info
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always       # 애플리케이션의 상세한 상태 정보
+      show-components: always   # 애플리케이션이 사용하는 구성 요소에 대한 정보

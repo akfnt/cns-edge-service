@@ -29,6 +29,7 @@ public class SecurityConfig {
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http, ReactiveClientRegistrationRepository clientRegistrationRepository) {
         return http
                 .authorizeExchange(exchange -> exchange
+                        .pathMatchers("/actuator/**").permitAll()    // 임시적으로 스프링 부트 액추에이터 엔드포인트에 인증되지 않은 액세스를 허용한다
                         .pathMatchers("/", "/*.css", "/*.js", "/favicon.ico")
                             .permitAll()                                        // SPA 의 정적 리소스에 대한 인증되지 않은 액세스 허용
                         .pathMatchers(HttpMethod.GET, "/books/**")
