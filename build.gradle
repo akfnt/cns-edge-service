@@ -50,6 +50,10 @@ dependencyManagement {
 	}
 }
 
+springBoot {
+	buildInfo()		// 빌드 정보를 META-INF/build-info.properties 파일에 저장한다. 이 파일을 BuildProperties 객체로 읽어들인다. -> info 엔드포인트 응답에 포함됨
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
