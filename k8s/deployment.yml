@@ -41,3 +41,15 @@ spec:
             value: "http://polar-ui"
           - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI
             value: "http://polar-keycloak/realms/PolarBookshop"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 9000
+          initialDelaySeconds: 10         # 활성 상태 확인을 시작하기 전 초기 지연 시간
+          periodSeconds: 5                # 활성 상태 정보를 가져오는 빈도
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 9000
+          initialDelaySeconds: 5
+          periodSeconds: 15

@@ -133,3 +133,8 @@ management:
     health:
       show-details: always       # 애플리케이션의 상세한 상태 정보
       show-components: always   # 애플리케이션이 사용하는 구성 요소에 대한 정보
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState,redis   # 준비 상태 프로브는 애플리케이션의 준비 상태와 레디스의 상태를 모두 확인한다
