@@ -128,7 +128,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health, prometheus
   endpoint:
     health:
       show-details: always       # 애플리케이션의 상세한 상태 정보
@@ -138,3 +138,6 @@ management:
       group:
         readiness:
           include: readinessState,redis   # 준비 상태 프로브는 애플리케이션의 준비 상태와 레디스의 상태를 모두 확인한다
+  metrics:
+    tags:
+      application: ${spring.application.name}             # 애플리케이션 이름으로 마이크로미터 공통 태그를 추가한다. 이로 인해 모든 매트릭에 적용되는 프로메데우스 레이블이 만들어진다.

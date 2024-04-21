@@ -13,6 +13,10 @@ spec:
     metadata:
       labels:                             # 파드 객체에 추가되는 레이블. 레이블은 selector 로 사용하는 것과 일치해야 한다
         app: cns-edge-service
+      annotations:
+        prometheus.io/scrape: "true"      # 프로메데우스에게 이 파드에 있는 컨테이너로부터 데이터를 가져와야 한다는 것을 알린다
+        prometheus.io/path: /actuator/prometheus    # 프로메데우스 메트릭을 제공하는 HTTP 엔드포인트를 지정
+        prometheus.io/port: "9000"        # 메트릭 엔드포인트의 포트 번호 지정
     spec:
       containers:                         # 파드 내 컨테이너의 목록
       - name: cns-edge-service         # 파드 이름
