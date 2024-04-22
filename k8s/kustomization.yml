@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yml
+  - service.yml
+  - ingress.yml
+
+# configMap 또는 secret 이 업데이트 될 때 애플리케이션이 자동으로 롤링 재시작 수행함
+configMapGenerator:
+  - name: cns-edge-config
+    files:
+      - application.yml
+    options:
+      labels:
+        app: cns-edge-service

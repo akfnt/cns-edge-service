@@ -46,10 +46,10 @@ jobs:
         with:
           kubectl: 1.28.3                       # 쿠버네티스 CLI 를 설치한다
           kubeval: 0.16.1                       # 큐비발을 설치한다
-          # k8s 폴더에 있는 쿠버네티스 매니페스트의 유효성 검사를 위해 큐비발을 사용한다
+          # k8s 폴더에 있는 커스터마이즈로 매니페스트를 생성하고 유효성 검사를 위해 큐비발을 사용한다
           # Different schema required because of https://github.com/instrumenta/kubeval/issues/301
           command: |
-            kubeval --strict --schema-location https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master -d k8s
+            kustomize build k8s | kubeval --strict --schema-location https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master -
   package:  # 잡의 고유 식별자
     name: Package and Publish
     if: ${{ github.ref == 'refs/heads/main' }}    # 잡을 main 브렌치에 대해서만 실행한다

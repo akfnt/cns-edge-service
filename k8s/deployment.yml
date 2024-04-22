@@ -29,22 +29,12 @@ spec:
         ports:
           - containerPort: 9000           # 컨테이너에 의해 노출되는 포트
         env:                              # 파드로 전달되는 환경변수의 목록
-          - name: BPL_JVM_THREAD_COUNT
-            value: "50"
-          - name: SPRING_CLOUD_CONFIG_URI
-            value: "http://cns-config-service"
-          - name: SPRING_CLOUD_CONFIG_FAIL-FAST
-            value: "true"
-          - name: SPRING_DATA_REDIS_HOST
-            value: "polar-redis"
           - name: CATALOG_SERVICE_URL
             value: "http://cns-catalog-service"
           - name: ORDER_SERVICE_URL
             value: "http://cns-order-service"
           - name: SPA_URL
             value: "http://polar-ui"
-          - name: SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER_URI
-            value: "http://polar-keycloak/realms/PolarBookshop"
         livenessProbe:
           httpGet:
             path: /actuator/health/liveness
@@ -57,3 +47,10 @@ spec:
             port: 9000
           initialDelaySeconds: 5
           periodSeconds: 15
+        volumeMounts:
+          - name: cns-edge-config-volume
+            mountPath: /workspace/config
+      volumes:
+        - name: cns-edge-config-volume
+          configMap:
+            name: cns-edge-config
