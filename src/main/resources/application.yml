@@ -11,7 +11,7 @@ spring:
   lifecycle:
     timeout-per-shutdown-phase: 15s     # 15초간의 우아한 종료기간을 둔다
   config:
-    import: "optional:configserver:"
+    import: ""                          # config service 로부터 설정 데이터를 임포트 하는 것을 중지. 다시 config service 를 사용하고 싶다면 "optional:configserver:" 을 추가
   data.redis:
     connect-timeout: 2s                 # 연결이 수립되기까지 기다리는 시간의 한도
     host: localhost                     # 레디스 호스트 기본값
@@ -36,6 +36,7 @@ spring:
             issuer-uri: http://localhost:8080/realms/PolarBookshop    # 특정 영역에 대한 OAuth2와 OIDC 관련 모든 엔드포인트의 정보를 제공하는 키클록 URL
   cloud:
     config:
+      enabled: false                    # 스프링 클라우드 컨피그 클라이언트 통합을 비활성화
       uri: http://localhost:8888
       request-connect-timeout: 5000     # 설정 서버에 연결될 때까지 기다리는 시간(밀리초)
       request-read-timeout: 5000        # 설정 서버에서 설정 데이터를 읽을 때까지 기다리는 시간(밀리초)
