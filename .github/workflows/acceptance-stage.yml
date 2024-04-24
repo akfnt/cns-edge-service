@@ -6,6 +6,13 @@ on:                                     # 이 워크플로는 커밋 단계 워�
     branches: main
 concurrency: acceptance                 # 한 번에 하나의 워크플로만 실행시킨다. 최신 릴리즈 후보만 실행할 수 있도록 처리하는 메커니즘을 제공
 
+env:
+  OWNER: akfnt
+  REGISTRY: ghcr.io
+  APP_REPO: cns-catalog-service
+  DEPLOY_REPO: polar-deployment
+  VERSION: ${{ github.sha }}
+
 jobs:                                   # 단순 메시지 출력으로 대체. 테스트 수행 전에 릴리스 후보를 스테이징 환경에 배포하는 부분도 빠져있음
   functional:
     name: Functional Acceptance Tests
@@ -31,3 +38,20 @@ jobs:                                   # 단순 메시지 출력으로 대체. 
     runs-on: ubuntu-22.04
     steps:
       - run: echo "Running resilience tests"
+  deliver:
+    name: Deliver release candidate to production
+    needs: [ functional, performance, security, resilience ]      # 모든 기능적/비기능적 수락 테스트가 성공적으로 완료된 후에만 실행
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Deliver application to production
+        uses: peter-evans/repository-dispatch@v2                  # 다른 저장소에서 워크플로를 시작하도록 이벤트를 보내는 액션
+        with:
+          token: ${{ secrets.DISPATCH_TOKEN }}                    # 다른 저장소로 이벤트를 보낼 수 있도록 하기 위한 액션 권한을 위한 토큰
+          repository: ${{ env.OWNER }}/${{ env.DEPLOY_REPO }}     # 알릴 저장소
+          event-type: app_delivery                                # 이벤트 식별을 위한 이름 (자유롭게 입력)
+          # 다른 저장소로 보낼 메시지 페이로드
+          client-payload: '{
+              "app_image": "${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.APP_REPO }}",
+              "app_name": "${{ env.APP_REPO }}",
+              "app_version": "${{ env.VERSION }}"
+            }'
