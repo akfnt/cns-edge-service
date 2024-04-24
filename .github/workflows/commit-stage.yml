@@ -5,7 +5,7 @@ on: push                                # 새 코드를 저장소로 푸시하�
 env:
   REGISTRY: ghcr.io                     # 깃허브 컨테이너 저장소를 사용한다
   IMAGE_NAME: akfnt/cns-edge-service    # 이미지의 이름. 자신의 깃허브 유저명을 소문자로 추가한다
-  VERSION: latest                       # 지금은 새 이미지를 latest로 태깅한다
+  VERSION: ${{ github.sha }}            # 깃 커밋 해시와 동일한 버전으로 릴리스 후보를 등록한다
 
 jobs:
   build:                                # 작업의 고유 식별자
@@ -93,3 +93,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}   # 저장소와 인증하기 위해 필요한 토큰. 깃허브 액션이 제공한다
       - name: Publish container image             # 릴리스 후보를 저장소로 푸시한다
         run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+      - name: Publish container image (latest)
+        run: |
+          docker tag \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
